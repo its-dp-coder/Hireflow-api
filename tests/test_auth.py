@@ -1,12 +1,4 @@
-from fastapi.testclient import TestClient
-
-from app.main import app
-
-
-client = TestClient(app)
-
-
-def test_register_user():
+def test_register_user(client):
     response = client.post(
         "/auth/register",
         json={
@@ -28,7 +20,7 @@ def test_register_user():
     assert "password_hash" not in data
 
 
-def test_duplicate_email():
+def test_duplicate_email(client):
     # First registration
     client.post(
         "/auth/register",
@@ -55,7 +47,7 @@ def test_duplicate_email():
     assert response.json()["detail"] == "Email already registered"
 
 
-def test_login_user():
+def test_login_user(client):
     # Register
     client.post(
         "/auth/register",
@@ -84,7 +76,7 @@ def test_login_user():
     assert data["token_type"] == "bearer"
 
 
-def test_invalid_login():
+def test_invalid_login(client):
     # Register
     client.post(
         "/auth/register",
@@ -109,7 +101,7 @@ def test_invalid_login():
     assert response.json()["detail"] == "Invalid email or password"
 
 
-def test_get_current_user():
+def test_get_current_user(client):
     # Register
     client.post(
         "/auth/register",
@@ -151,7 +143,7 @@ def test_get_current_user():
     assert data["role"] == "candidate"
 
 
-def test_current_user_without_token():
+def test_current_user_without_token(client):
     response = client.get("/auth/me")
 
     assert response.status_code == 401

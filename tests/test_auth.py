@@ -147,3 +147,17 @@ def test_current_user_without_token(client):
     response = client.get("/auth/me")
 
     assert response.status_code == 401
+
+def test_user_cannot_choose_admin_role(client):
+    response = client.post(
+        "/auth/register",
+        json={
+            "full_name": "Normal User",
+            "email": "normal@example.com",
+            "password": "testpassword123",
+            "role": "admin",
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.json()["role"] == "candidate"

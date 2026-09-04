@@ -44,14 +44,8 @@ def create_job(
 )
 def list_jobs(
     db: Session = Depends(get_db),
-    search: str | None = Query(
-        default=None,
-        min_length=1,
-    ),
-    location: str | None = Query(
-        default=None,
-        min_length=1,
-    ),
+    search: str | None = Query(default=None, min_length=1),
+    location: str | None = Query(default=None, min_length=1),
 ):
     query = db.query(Job)
 
@@ -96,3 +90,75 @@ def get_job(
         )
 
     return job
+
+
+@router.put(
+    "/{job_id}",
+    response_model=JobResponse,
+)
+def update_job(
+    job_id: int,
+    job_data: JobCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("recruiter")),
+):
+    job = (
+        db.query(Job)
+        .filter(Job.id == job_id)
+        .first()
+    )
+
+    if job is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found",
+        )
+
+    if job.recruiter_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only modify your own jobs",
+        )
+
+    job.title = job_data.title
+    job.description = job_data.description
+    job.location = job_data.location
+    job.employment_type = job_data.employment_type
+
+    db.commit()
+    db.refresh(job)
+
+    return job
+
+
+@router.delete(
+    "/{job_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_job(
+    job_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("recruiter")),
+):
+    job = (
+        db.query(Job)
+        .filter(Job.id == job_id)
+        .first()
+    )
+
+    if job is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found",
+        )
+
+    if job.recruiter_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only delete your own jobs",
+        )
+
+    db.delete(job)
+    db.commit()
+
+    return None

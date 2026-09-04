@@ -298,3 +298,211 @@ def test_filter_jobs_by_location(client, recruiter_user):
 
     assert len(data) == 1
     assert data[0]["location"] == "Bangalore"
+
+
+def test_recruiter_can_update_own_job(client, recruiter_user):
+    login_response = client.post(
+        "/auth/login",
+        json={
+            "email": "recruiter@example.com",
+            "password": "testpassword123",
+        },
+    )
+
+    token = login_response.json()["access_token"]
+
+    create_response = client.post(
+        "/jobs",
+        headers={
+            "Authorization": f"Bearer {token}",
+        },
+        json={
+            "title": "Python Developer",
+            "description": "Old description",
+            "location": "Bangalore",
+            "employment_type": "Full-time",
+        },
+    )
+
+    job_id = create_response.json()["id"]
+
+    response = client.put(
+        f"/jobs/{job_id}",
+        headers={
+            "Authorization": f"Bearer {token}",
+        },
+        json={
+            "title": "Senior Python Developer",
+            "description": "Updated description",
+            "location": "Remote",
+            "employment_type": "Full-time",
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["title"] == "Senior Python Developer"
+    assert data["description"] == "Updated description"
+    assert data["location"] == "Remote"
+    assert data["recruiter_id"] == recruiter_user.id
+
+
+def test_candidate_cannot_update_job(client, recruiter_user):
+    login_response = client.post(
+        "/auth/login",
+        json={
+            "email": "recruiter@example.com",
+            "password": "testpassword123",
+        },
+    )
+
+    recruiter_token = login_response.json()["access_token"]
+
+    create_response = client.post(
+        "/jobs",
+        headers={
+            "Authorization": f"Bearer {recruiter_token}",
+        },
+        json={
+            "title": "Python Developer",
+            "description": "Backend development",
+            "location": "Bangalore",
+            "employment_type": "Full-time",
+        },
+    )
+
+    job_id = create_response.json()["id"]
+
+    client.post(
+        "/auth/register",
+        json={
+            "full_name": "Candidate User",
+            "email": "candidate-update@example.com",
+            "password": "testpassword123",
+        },
+    )
+
+    candidate_login = client.post(
+        "/auth/login",
+        json={
+            "email": "candidate-update@example.com",
+            "password": "testpassword123",
+        },
+    )
+
+    candidate_token = candidate_login.json()["access_token"]
+
+    response = client.put(
+        f"/jobs/{job_id}",
+        headers={
+            "Authorization": f"Bearer {candidate_token}",
+        },
+        json={
+            "title": "Hacked Job",
+            "description": "Should not update",
+            "location": "Mumbai",
+            "employment_type": "Full-time",
+        },
+    )
+
+    assert response.status_code == 403
+
+
+def test_recruiter_can_delete_own_job(client, recruiter_user):
+    login_response = client.post(
+        "/auth/login",
+        json={
+            "email": "recruiter@example.com",
+            "password": "testpassword123",
+        },
+    )
+
+    token = login_response.json()["access_token"]
+
+    create_response = client.post(
+        "/jobs",
+        headers={
+            "Authorization": f"Bearer {token}",
+        },
+        json={
+            "title": "Temporary Developer",
+            "description": "Temporary job",
+            "location": "Delhi",
+            "employment_type": "Full-time",
+        },
+    )
+
+    job_id = create_response.json()["id"]
+
+    response = client.delete(
+        f"/jobs/{job_id}",
+        headers={
+            "Authorization": f"Bearer {token}",
+        },
+    )
+
+    assert response.status_code == 204
+
+    get_response = client.get(
+        f"/jobs/{job_id}",
+    )
+
+    assert get_response.status_code == 404
+
+
+def test_candidate_cannot_delete_job(client, recruiter_user):
+    login_response = client.post(
+        "/auth/login",
+        json={
+            "email": "recruiter@example.com",
+            "password": "testpassword123",
+        },
+    )
+
+    recruiter_token = login_response.json()["access_token"]
+
+    create_response = client.post(
+        "/jobs",
+        headers={
+            "Authorization": f"Bearer {recruiter_token}",
+        },
+        json={
+            "title": "Python Developer",
+            "description": "Backend development",
+            "location": "Bangalore",
+            "employment_type": "Full-time",
+        },
+    )
+
+    job_id = create_response.json()["id"]
+
+    client.post(
+        "/auth/register",
+        json={
+            "full_name": "Delete Candidate",
+            "email": "candidate-delete@example.com",
+            "password": "testpassword123",
+        },
+    )
+
+    candidate_login = client.post(
+        "/auth/login",
+        json={
+            "email": "candidate-delete@example.com",
+            "password": "testpassword123",
+        },
+    )
+
+    candidate_token = candidate_login.json()["access_token"]
+
+    response = client.delete(
+        f"/jobs/{job_id}",
+        headers={
+            "Authorization": f"Bearer {candidate_token}",
+        },
+    )
+
+    assert response.status_code == 403
+

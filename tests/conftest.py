@@ -4,8 +4,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.core.config import settings
+from app.core.security import hash_password
 from app.db.database import Base, get_db
 from app.main import app
+from app.models import User
 
 
 TEST_DATABASE_URL = settings.database_url.replace(
@@ -61,3 +63,26 @@ def client():
         db.close()
 
         app.dependency_overrides.clear()
+
+
+@pytest.fixture()
+def recruiter_user():
+    db = TestingSessionLocal()
+
+    try:
+        recruiter = User(
+            full_name="Test Recruiter",
+            email="recruiter@example.com",
+            password_hash=hash_password("testpassword123"),
+            role="recruiter",
+        )
+
+        db.add(recruiter)
+        db.commit()
+        db.refresh(recruiter)
+
+        yield recruiter
+
+    finally:
+        db.rollback()
+        db.close()

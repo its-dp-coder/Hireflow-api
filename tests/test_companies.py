@@ -1,11 +1,13 @@
 def test_recruiter_can_create_company(client, recruiter_user):
     login_response = client.post(
         "/auth/login",
-        json={
-            "email": "recruiter@example.com",
+        data={
+            "username": "recruiter@example.com",
             "password": "testpassword123",
         },
     )
+
+    assert login_response.status_code == 200
 
     token = login_response.json()["access_token"]
 
@@ -43,11 +45,13 @@ def test_candidate_cannot_create_company(client):
 
     login_response = client.post(
         "/auth/login",
-        json={
-            "email": "company-candidate@example.com",
+        data={
+            "username": "company-candidate@example.com",
             "password": "testpassword123",
         },
     )
+
+    assert login_response.status_code == 200
 
     token = login_response.json()["access_token"]
 
@@ -70,11 +74,13 @@ def test_candidate_cannot_create_company(client):
 def test_list_companies(client, recruiter_user):
     login_response = client.post(
         "/auth/login",
-        json={
-            "email": "recruiter@example.com",
+        data={
+            "username": "recruiter@example.com",
             "password": "testpassword123",
         },
     )
+
+    assert login_response.status_code == 200
 
     token = login_response.json()["access_token"]
 
@@ -104,11 +110,13 @@ def test_list_companies(client, recruiter_user):
 def test_get_company_by_id(client, recruiter_user):
     login_response = client.post(
         "/auth/login",
-        json={
-            "email": "recruiter@example.com",
+        data={
+            "username": "recruiter@example.com",
             "password": "testpassword123",
         },
     )
+
+    assert login_response.status_code == 200
 
     token = login_response.json()["access_token"]
 
@@ -124,6 +132,8 @@ def test_get_company_by_id(client, recruiter_user):
             "location": "Mumbai",
         },
     )
+
+    assert create_response.status_code == 201
 
     company_id = create_response.json()["id"]
 
@@ -152,11 +162,13 @@ def test_duplicate_company_not_allowed(
 ):
     login_response = client.post(
         "/auth/login",
-        json={
-            "email": "recruiter@example.com",
+        data={
+            "username": "recruiter@example.com",
             "password": "testpassword123",
         },
     )
+
+    assert login_response.status_code == 200
 
     token = login_response.json()["access_token"]
 
@@ -195,11 +207,13 @@ def test_recruiter_can_update_own_company(
 ):
     login_response = client.post(
         "/auth/login",
-        json={
-            "email": "recruiter@example.com",
+        data={
+            "username": "recruiter@example.com",
             "password": "testpassword123",
         },
     )
+
+    assert login_response.status_code == 200
 
     token = login_response.json()["access_token"]
 
@@ -215,6 +229,8 @@ def test_recruiter_can_update_own_company(
             "location": "Delhi",
         },
     )
+
+    assert create_response.status_code == 201
 
     company_id = create_response.json()["id"]
 
@@ -246,11 +262,13 @@ def test_recruiter_can_delete_own_company(
 ):
     login_response = client.post(
         "/auth/login",
-        json={
-            "email": "recruiter@example.com",
+        data={
+            "username": "recruiter@example.com",
             "password": "testpassword123",
         },
     )
+
+    assert login_response.status_code == 200
 
     token = login_response.json()["access_token"]
 
@@ -266,6 +284,8 @@ def test_recruiter_can_delete_own_company(
             "location": "Delhi",
         },
     )
+
+    assert create_response.status_code == 201
 
     company_id = create_response.json()["id"]
 
@@ -288,8 +308,8 @@ def test_recruiter_can_delete_own_company(
 def test_list_companies_pagination(client, recruiter_user):
     login_response = client.post(
         "/auth/login",
-        json={
-            "email": "recruiter@example.com",
+        data={
+            "username": "recruiter@example.com",
             "password": "testpassword123",
         },
     )

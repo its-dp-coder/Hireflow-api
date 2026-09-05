@@ -5,7 +5,6 @@ def test_register_user(client):
             "full_name": "Automation Candidate",
             "email": "automation@example.com",
             "password": "testpassword123",
-            "role": "candidate",
         },
     )
 
@@ -28,7 +27,6 @@ def test_duplicate_email(client):
             "full_name": "Duplicate User",
             "email": "duplicate@example.com",
             "password": "testpassword123",
-            "role": "candidate",
         },
     )
 
@@ -39,7 +37,6 @@ def test_duplicate_email(client):
             "full_name": "Another User",
             "email": "duplicate@example.com",
             "password": "testpassword123",
-            "role": "candidate",
         },
     )
 
@@ -55,15 +52,14 @@ def test_login_user(client):
             "full_name": "Login Candidate",
             "email": "login@example.com",
             "password": "testpassword123",
-            "role": "candidate",
         },
     )
 
-    # Login
+    # Login using OAuth2 form data
     response = client.post(
         "/auth/login",
-        json={
-            "email": "login@example.com",
+        data={
+            "username": "login@example.com",
             "password": "testpassword123",
         },
     )
@@ -84,15 +80,14 @@ def test_invalid_login(client):
             "full_name": "Invalid Login User",
             "email": "invalid@example.com",
             "password": "correctpassword",
-            "role": "candidate",
         },
     )
 
     # Wrong password
     response = client.post(
         "/auth/login",
-        json={
-            "email": "invalid@example.com",
+        data={
+            "username": "invalid@example.com",
             "password": "wrongpassword",
         },
     )
@@ -109,15 +104,14 @@ def test_get_current_user(client):
             "full_name": "Current User",
             "email": "current@example.com",
             "password": "testpassword123",
-            "role": "candidate",
         },
     )
 
     # Login
     login_response = client.post(
         "/auth/login",
-        json={
-            "email": "current@example.com",
+        data={
+            "username": "current@example.com",
             "password": "testpassword123",
         },
     )
@@ -147,6 +141,7 @@ def test_current_user_without_token(client):
     response = client.get("/auth/me")
 
     assert response.status_code == 401
+
 
 def test_user_cannot_choose_admin_role(client):
     response = client.post(

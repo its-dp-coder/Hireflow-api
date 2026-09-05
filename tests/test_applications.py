@@ -1,11 +1,13 @@
 def create_job(client, recruiter_user):
     login_response = client.post(
         "/auth/login",
-        json={
-            "email": "recruiter@example.com",
+        data={
+            "username": "recruiter@example.com",
             "password": "testpassword123",
         },
     )
+
+    assert login_response.status_code == 200
 
     token = login_response.json()["access_token"]
 
@@ -41,8 +43,8 @@ def create_candidate(client):
 
     login_response = client.post(
         "/auth/login",
-        json={
-            "email": "application-candidate@example.com",
+        data={
+            "username": "application-candidate@example.com",
             "password": "testpassword123",
         },
     )
@@ -95,11 +97,13 @@ def test_recruiter_cannot_apply_to_job(
 
     login_response = client.post(
         "/auth/login",
-        json={
-            "email": "recruiter@example.com",
+        data={
+            "username": "recruiter@example.com",
             "password": "testpassword123",
         },
     )
+
+    assert login_response.status_code == 200
 
     token = login_response.json()["access_token"]
 
@@ -222,7 +226,7 @@ def test_recruiter_can_view_applications_for_own_job(
 
     candidate_token = create_candidate(client)
 
-    client.post(
+    response = client.post(
         f"/applications/jobs/{job_id}",
         headers={
             "Authorization": f"Bearer {candidate_token}",
@@ -232,13 +236,17 @@ def test_recruiter_can_view_applications_for_own_job(
         },
     )
 
+    assert response.status_code == 201
+
     recruiter_login = client.post(
         "/auth/login",
-        json={
-            "email": "recruiter@example.com",
+        data={
+            "username": "recruiter@example.com",
             "password": "testpassword123",
         },
     )
+
+    assert recruiter_login.status_code == 200
 
     recruiter_token = recruiter_login.json()["access_token"]
 
@@ -300,15 +308,19 @@ def test_recruiter_can_update_application_status(
         },
     )
 
+    assert apply_response.status_code == 201
+
     application_id = apply_response.json()["id"]
 
     recruiter_login = client.post(
         "/auth/login",
-        json={
-            "email": "recruiter@example.com",
+        data={
+            "username": "recruiter@example.com",
             "password": "testpassword123",
         },
     )
+
+    assert recruiter_login.status_code == 200
 
     recruiter_token = recruiter_login.json()["access_token"]
 
@@ -328,6 +340,7 @@ def test_recruiter_can_update_application_status(
 
     assert data["id"] == application_id
     assert data["status"] == "shortlisted"
+
 
 def test_invalid_application_status_is_rejected(
     client,
@@ -356,11 +369,13 @@ def test_invalid_application_status_is_rejected(
 
     recruiter_login = client.post(
         "/auth/login",
-        json={
-            "email": "recruiter@example.com",
+        data={
+            "username": "recruiter@example.com",
             "password": "testpassword123",
         },
     )
+
+    assert recruiter_login.status_code == 200
 
     recruiter_token = recruiter_login.json()["access_token"]
 
@@ -376,4 +391,97 @@ def test_invalid_application_status_is_rejected(
 
     assert response.status_code == 422
 
-    
+
+def test_my_applications_pagination(
+    client,
+    recruiter_user,
+):
+    job_id = create_job(
+        client,
+        recruiter_user,
+    )
+
+    candidate_token = create_candidate(client)
+
+    response = client.post(
+        f"/applications/jobs/{job_id}",
+        headers={
+            "Authorization": f"Bearer {candidate_token}",
+        },
+        json={
+            "cover_letter": "Test application",
+        },
+    )
+
+    assert response.status_code == 201
+
+    response = client.get(
+        "/applications/my?skip=0&limit=1",
+        headers={
+            "Authorization": f"Bearer {candidate_token}",
+        },
+    )
+
+    assert response.status_code == 200
+    assert len(response.json()) == 1
+
+
+def test_my_applications_limit_cannot_exceed_100(
+    client,
+):
+    candidate_token = create_candidate(client)
+
+    response = client.get(
+        "/applications/my?limit=101",
+        headers={
+            "Authorization": f"Bearer {candidate_token}",
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_job_applications_pagination(
+    client,
+    recruiter_user,
+):
+    job_id = create_job(
+        client,
+        recruiter_user,
+    )
+
+    candidate_token = create_candidate(client)
+
+    response = client.post(
+        f"/applications/jobs/{job_id}",
+        headers={
+            "Authorization": f"Bearer {candidate_token}",
+        },
+        json={
+            "cover_letter": "Test application",
+        },
+    )
+
+    assert response.status_code == 201
+
+    recruiter_login = client.post(
+        "/auth/login",
+        data={
+            "username": "recruiter@example.com",
+            "password": "testpassword123",
+        },
+    )
+
+    assert recruiter_login.status_code == 200
+
+    recruiter_token = recruiter_login.json()["access_token"]
+
+    response = client.get(
+        f"/applications/job/{job_id}?skip=0&limit=1",
+        headers={
+            "Authorization": f"Bearer {recruiter_token}",
+        },
+    )
+
+    assert response.status_code == 200
+    assert len(response.json()) == 1

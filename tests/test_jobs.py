@@ -1,15 +1,16 @@
 def login_recruiter(client):
-    response = client.post(
+    login_response = client.post(
         "/auth/login",
-        json={
-            "email": "recruiter@example.com",
+        data={
+            "username": "recruiter@example.com",
             "password": "testpassword123",
         },
     )
 
-    assert response.status_code == 200
+    assert login_response.status_code == 200
 
-    return response.json()["access_token"]
+    return login_response.json()["access_token"]
+
 
 def test_candidate_cannot_create_job(client):
     client.post(
@@ -23,8 +24,8 @@ def test_candidate_cannot_create_job(client):
 
     login_response = client.post(
         "/auth/login",
-        json={
-            "email": "candidate@example.com",
+        data={
+            "username": "candidate@example.com",
             "password": "testpassword123",
         },
     )
@@ -69,8 +70,8 @@ def test_user_without_token_cannot_create_job(client):
 def test_recruiter_can_create_job(client, recruiter_user):
     login_response = client.post(
         "/auth/login",
-        json={
-            "email": "recruiter@example.com",
+        data={
+            "username": "recruiter@example.com",
             "password": "testpassword123",
         },
     )
@@ -108,8 +109,8 @@ def test_job_belongs_to_authenticated_recruiter(
 ):
     login_response = client.post(
         "/auth/login",
-        json={
-            "email": "recruiter@example.com",
+        data={
+            "username": "recruiter@example.com",
             "password": "testpassword123",
         },
     )
@@ -138,11 +139,13 @@ def test_job_belongs_to_authenticated_recruiter(
 def test_list_jobs(client, recruiter_user):
     login_response = client.post(
         "/auth/login",
-        json={
-            "email": "recruiter@example.com",
+        data={
+            "username": "recruiter@example.com",
             "password": "testpassword123",
         },
     )
+
+    assert login_response.status_code == 200
 
     token = login_response.json()["access_token"]
 
@@ -172,11 +175,13 @@ def test_list_jobs(client, recruiter_user):
 def test_get_job_by_id(client, recruiter_user):
     login_response = client.post(
         "/auth/login",
-        json={
-            "email": "recruiter@example.com",
+        data={
+            "username": "recruiter@example.com",
             "password": "testpassword123",
         },
     )
+
+    assert login_response.status_code == 200
 
     token = login_response.json()["access_token"]
 
@@ -192,6 +197,8 @@ def test_get_job_by_id(client, recruiter_user):
             "employment_type": "Full-time",
         },
     )
+
+    assert create_response.status_code == 201
 
     job_id = create_response.json()["id"]
 
@@ -212,11 +219,13 @@ def test_get_nonexistent_job(client):
 def test_search_jobs(client, recruiter_user):
     login_response = client.post(
         "/auth/login",
-        json={
-            "email": "recruiter@example.com",
+        data={
+            "username": "recruiter@example.com",
             "password": "testpassword123",
         },
     )
+
+    assert login_response.status_code == 200
 
     token = login_response.json()["access_token"]
 
@@ -264,11 +273,13 @@ def test_search_jobs(client, recruiter_user):
 def test_filter_jobs_by_location(client, recruiter_user):
     login_response = client.post(
         "/auth/login",
-        json={
-            "email": "recruiter@example.com",
+        data={
+            "username": "recruiter@example.com",
             "password": "testpassword123",
         },
     )
+
+    assert login_response.status_code == 200
 
     token = login_response.json()["access_token"]
 
@@ -316,11 +327,13 @@ def test_filter_jobs_by_location(client, recruiter_user):
 def test_recruiter_can_update_own_job(client, recruiter_user):
     login_response = client.post(
         "/auth/login",
-        json={
-            "email": "recruiter@example.com",
+        data={
+            "username": "recruiter@example.com",
             "password": "testpassword123",
         },
     )
+
+    assert login_response.status_code == 200
 
     token = login_response.json()["access_token"]
 
@@ -336,6 +349,8 @@ def test_recruiter_can_update_own_job(client, recruiter_user):
             "employment_type": "Full-time",
         },
     )
+
+    assert create_response.status_code == 201
 
     job_id = create_response.json()["id"]
 
@@ -365,11 +380,13 @@ def test_recruiter_can_update_own_job(client, recruiter_user):
 def test_candidate_cannot_update_job(client, recruiter_user):
     login_response = client.post(
         "/auth/login",
-        json={
-            "email": "recruiter@example.com",
+        data={
+            "username": "recruiter@example.com",
             "password": "testpassword123",
         },
     )
+
+    assert login_response.status_code == 200
 
     recruiter_token = login_response.json()["access_token"]
 
@@ -386,6 +403,8 @@ def test_candidate_cannot_update_job(client, recruiter_user):
         },
     )
 
+    assert create_response.status_code == 201
+
     job_id = create_response.json()["id"]
 
     client.post(
@@ -399,11 +418,13 @@ def test_candidate_cannot_update_job(client, recruiter_user):
 
     candidate_login = client.post(
         "/auth/login",
-        json={
-            "email": "candidate-update@example.com",
+        data={
+            "username": "candidate-update@example.com",
             "password": "testpassword123",
         },
     )
+
+    assert candidate_login.status_code == 200
 
     candidate_token = candidate_login.json()["access_token"]
 
@@ -426,11 +447,13 @@ def test_candidate_cannot_update_job(client, recruiter_user):
 def test_recruiter_can_delete_own_job(client, recruiter_user):
     login_response = client.post(
         "/auth/login",
-        json={
-            "email": "recruiter@example.com",
+        data={
+            "username": "recruiter@example.com",
             "password": "testpassword123",
         },
     )
+
+    assert login_response.status_code == 200
 
     token = login_response.json()["access_token"]
 
@@ -446,6 +469,8 @@ def test_recruiter_can_delete_own_job(client, recruiter_user):
             "employment_type": "Full-time",
         },
     )
+
+    assert create_response.status_code == 201
 
     job_id = create_response.json()["id"]
 
@@ -468,11 +493,13 @@ def test_recruiter_can_delete_own_job(client, recruiter_user):
 def test_candidate_cannot_delete_job(client, recruiter_user):
     login_response = client.post(
         "/auth/login",
-        json={
-            "email": "recruiter@example.com",
+        data={
+            "username": "recruiter@example.com",
             "password": "testpassword123",
         },
     )
+
+    assert login_response.status_code == 200
 
     recruiter_token = login_response.json()["access_token"]
 
@@ -489,6 +516,8 @@ def test_candidate_cannot_delete_job(client, recruiter_user):
         },
     )
 
+    assert create_response.status_code == 201
+
     job_id = create_response.json()["id"]
 
     client.post(
@@ -502,11 +531,13 @@ def test_candidate_cannot_delete_job(client, recruiter_user):
 
     candidate_login = client.post(
         "/auth/login",
-        json={
-            "email": "candidate-delete@example.com",
+        data={
+            "username": "candidate-delete@example.com",
             "password": "testpassword123",
         },
     )
+
+    assert candidate_login.status_code == 200
 
     candidate_token = candidate_login.json()["access_token"]
 
@@ -518,6 +549,7 @@ def test_candidate_cannot_delete_job(client, recruiter_user):
     )
 
     assert response.status_code == 403
+
 
 def test_list_jobs_pagination(client, recruiter_user):
     token = login_recruiter(client)
@@ -538,7 +570,9 @@ def test_list_jobs_pagination(client, recruiter_user):
 
         assert response.status_code == 201
 
-    response = client.get("/jobs?skip=0&limit=2")
+    response = client.get(
+        "/jobs?skip=0&limit=2"
+    )
 
     assert response.status_code == 200
 
@@ -548,13 +582,16 @@ def test_list_jobs_pagination(client, recruiter_user):
 
 
 def test_list_jobs_limit_cannot_exceed_100(client):
-    response = client.get("/jobs?limit=101")
+    response = client.get(
+        "/jobs?limit=101"
+    )
 
     assert response.status_code == 422
 
 
 def test_list_jobs_skip_cannot_be_negative(client):
-    response = client.get("/jobs?skip=-1")
+    response = client.get(
+        "/jobs?skip=-1"
+    )
 
-    assert response.status_code == 422    
-
+    assert response.status_code == 422

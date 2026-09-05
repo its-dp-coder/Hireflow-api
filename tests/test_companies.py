@@ -283,3 +283,56 @@ def test_recruiter_can_delete_own_company(
     )
 
     assert get_response.status_code == 404
+
+
+def test_list_companies_pagination(client, recruiter_user):
+    login_response = client.post(
+        "/auth/login",
+        json={
+            "email": "recruiter@example.com",
+            "password": "testpassword123",
+        },
+    )
+
+    assert login_response.status_code == 200
+
+    token = login_response.json()["access_token"]
+
+    for index in range(3):
+        response = client.post(
+            "/companies",
+            headers={
+                "Authorization": f"Bearer {token}",
+            },
+            json={
+                "name": f"Company {index}",
+                "description": "Technology company.",
+                "website": "https://example.com",
+                "location": "Bangalore",
+            },
+        )
+
+        assert response.status_code == 201
+
+    response = client.get(
+        "/companies?skip=0&limit=2"
+    )
+
+    assert response.status_code == 200
+    assert len(response.json()) == 2
+
+
+def test_list_companies_limit_cannot_exceed_100(client):
+    response = client.get(
+        "/companies?limit=101"
+    )
+
+    assert response.status_code == 422
+
+
+def test_list_companies_skip_cannot_be_negative(client):
+    response = client.get(
+        "/companies?skip=-1"
+    )
+
+    assert response.status_code == 422

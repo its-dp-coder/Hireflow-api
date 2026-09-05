@@ -1,4 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Query,
+    status,
+)
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user, require_role
@@ -56,10 +62,14 @@ def create_company(
 )
 def list_companies(
     db: Session = Depends(get_db),
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=10, ge=1, le=100),
 ):
     return (
         db.query(Company)
         .order_by(Company.created_at.desc())
+        .offset(skip)
+        .limit(limit)
         .all()
     )
 

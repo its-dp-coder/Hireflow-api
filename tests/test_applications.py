@@ -328,3 +328,52 @@ def test_recruiter_can_update_application_status(
 
     assert data["id"] == application_id
     assert data["status"] == "shortlisted"
+
+def test_invalid_application_status_is_rejected(
+    client,
+    recruiter_user,
+):
+    job_id = create_job(
+        client,
+        recruiter_user,
+    )
+
+    candidate_token = create_candidate(client)
+
+    apply_response = client.post(
+        f"/applications/jobs/{job_id}",
+        headers={
+            "Authorization": f"Bearer {candidate_token}",
+        },
+        json={
+            "cover_letter": "Test application",
+        },
+    )
+
+    assert apply_response.status_code == 201
+
+    application_id = apply_response.json()["id"]
+
+    recruiter_login = client.post(
+        "/auth/login",
+        json={
+            "email": "recruiter@example.com",
+            "password": "testpassword123",
+        },
+    )
+
+    recruiter_token = recruiter_login.json()["access_token"]
+
+    response = client.put(
+        f"/applications/{application_id}/status",
+        headers={
+            "Authorization": f"Bearer {recruiter_token}",
+        },
+        json={
+            "status": "random-status",
+        },
+    )
+
+    assert response.status_code == 422
+
+    

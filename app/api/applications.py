@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.dependencies import get_current_user, require_role
 from app.db.database import get_db
 from app.models import Application, Job, User
+from app.models.application import ApplicationStatus
 from app.schemas.application import (
     ApplicationCreate,
     ApplicationResponse,
@@ -59,7 +60,7 @@ def apply_to_job(
         job_id=job_id,
         candidate_id=current_user.id,
         cover_letter=application_data.cover_letter,
-        status="applied",
+        status=ApplicationStatus.APPLIED,
     )
 
     db.add(application)
@@ -154,19 +155,7 @@ def update_application_status(
             detail="You can only update applications for your own jobs",
         )
 
-    allowed_statuses = {
-        "applied",
-        "shortlisted",
-        "interview",
-        "rejected",
-        "hired",
-    }
-
-    if status_data.status not in allowed_statuses:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid application status",
-        )
+   
 
     application.status = status_data.status
 

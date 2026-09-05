@@ -2,13 +2,15 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
+from app.models.application import ApplicationStatus
+
 
 class ApplicationCreate(BaseModel):
     cover_letter: str | None = None
 
 
 class ApplicationStatusUpdate(BaseModel):
-    status: str
+    status: ApplicationStatus
 
 
 class ApplicationResponse(BaseModel):
@@ -16,7 +18,7 @@ class ApplicationResponse(BaseModel):
     job_id: int
     candidate_id: int
     cover_letter: str | None
-    status: str
+    status: ApplicationStatus
     created_at: datetime
 
     model_config = ConfigDict(

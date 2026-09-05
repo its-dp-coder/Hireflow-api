@@ -1,11 +1,37 @@
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
+import enum
+
+from sqlalchemy import (
+    Column,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.sql import func
 
 from app.db.database import Base
 
 
+class ApplicationStatus(str, enum.Enum):
+    APPLIED = "applied"
+    SHORTLISTED = "shortlisted"
+    INTERVIEW = "interview"
+    REJECTED = "rejected"
+    HIRED = "hired"
+
+
 class Application(Base):
     __tablename__ = "applications"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "job_id",
+            "candidate_id",
+            name="uq_application_job_candidate",
+        ),
+    )
 
     id = Column(
         Integer,
@@ -33,9 +59,15 @@ class Application(Base):
     )
 
     status = Column(
-        String(30),
+        Enum(
+            ApplicationStatus,
+            name="application_status",
+            values_callable=lambda enum_class: [
+                item.value for item in enum_class
+            ],
+        ),
         nullable=False,
-        default="applied",
+        default=ApplicationStatus.APPLIED,
     )
 
     created_at = Column(

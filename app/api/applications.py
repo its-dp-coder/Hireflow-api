@@ -1,7 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Query,
+    status,
+)
 from sqlalchemy.orm import Session
 
-from app.core.dependencies import get_current_user, require_role
+from app.core.dependencies import require_role
 from app.db.database import get_db
 from app.models import Application, Job, User
 from app.models.application import ApplicationStatus
@@ -77,11 +83,24 @@ def apply_to_job(
 def get_my_applications(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role("candidate")),
+    skip: int = Query(
+        default=0,
+        ge=0,
+    ),
+    limit: int = Query(
+        default=10,
+        ge=1,
+        le=100,
+    ),
 ):
     return (
         db.query(Application)
-        .filter(Application.candidate_id == current_user.id)
+        .filter(
+            Application.candidate_id == current_user.id
+        )
         .order_by(Application.created_at.desc())
+        .offset(skip)
+        .limit(limit)
         .all()
     )
 
@@ -94,6 +113,15 @@ def get_job_applications(
     job_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role("recruiter")),
+    skip: int = Query(
+        default=0,
+        ge=0,
+    ),
+    limit: int = Query(
+        default=10,
+        ge=1,
+        le=100,
+    ),
 ):
     job = (
         db.query(Job)
@@ -117,6 +145,8 @@ def get_job_applications(
         db.query(Application)
         .filter(Application.job_id == job_id)
         .order_by(Application.created_at.desc())
+        .offset(skip)
+        .limit(limit)
         .all()
     )
 
@@ -154,8 +184,6 @@ def update_application_status(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You can only update applications for your own jobs",
         )
-
-   
 
     application.status = status_data.status
 

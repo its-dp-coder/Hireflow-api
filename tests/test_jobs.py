@@ -1,3 +1,16 @@
+def login_recruiter(client):
+    response = client.post(
+        "/auth/login",
+        json={
+            "email": "recruiter@example.com",
+            "password": "testpassword123",
+        },
+    )
+
+    assert response.status_code == 200
+
+    return response.json()["access_token"]
+
 def test_candidate_cannot_create_job(client):
     client.post(
         "/auth/register",
@@ -505,4 +518,43 @@ def test_candidate_cannot_delete_job(client, recruiter_user):
     )
 
     assert response.status_code == 403
+
+def test_list_jobs_pagination(client, recruiter_user):
+    token = login_recruiter(client)
+
+    for index in range(3):
+        response = client.post(
+            "/jobs",
+            headers={
+                "Authorization": f"Bearer {token}",
+            },
+            json={
+                "title": f"Backend Developer {index}",
+                "description": "Build APIs.",
+                "location": "Bangalore",
+                "employment_type": "Full-time",
+            },
+        )
+
+        assert response.status_code == 201
+
+    response = client.get("/jobs?skip=0&limit=2")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 2
+
+
+def test_list_jobs_limit_cannot_exceed_100(client):
+    response = client.get("/jobs?limit=101")
+
+    assert response.status_code == 422
+
+
+def test_list_jobs_skip_cannot_be_negative(client):
+    response = client.get("/jobs?skip=-1")
+
+    assert response.status_code == 422    
 

@@ -46,6 +46,8 @@ def list_jobs(
     db: Session = Depends(get_db),
     search: str | None = Query(default=None, min_length=1),
     location: str | None = Query(default=None, min_length=1),
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=10, ge=1, le=100),
 ):
     query = db.query(Job)
 
@@ -65,6 +67,8 @@ def list_jobs(
     return (
         query
         .order_by(Job.created_at.desc())
+        .offset(skip)
+        .limit(limit)
         .all()
     )
 
